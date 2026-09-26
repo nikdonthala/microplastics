@@ -143,6 +143,18 @@ class TrainRequest(BaseModel):
     test_size: float = Field(default=0.25, gt=0.0, lt=1.0)
     n_estimators: int = Field(default=100, ge=1)
     random_state: int = Field(default=42, ge=0)
+    algorithm: str = Field(
+        default="auto",
+        description=(
+            "auto (CV model selection) or one of: random_forest, extra_trees, "
+            "gradient_boosting, hist_gradient_boosting."
+        ),
+    )
+    cv_folds: int | None = Field(
+        default=None,
+        ge=2,
+        description="Stratified k-fold count for model selection (default: config).",
+    )
 
 
 class TrainResponse(BaseModel):
@@ -151,4 +163,7 @@ class TrainResponse(BaseModel):
     metrics: dict[str, Any] | None = None
     model_path: str | None = Field(
         default=None, description="Filename only (never a filesystem path)."
+    )
+    algorithm: str | None = Field(
+        default=None, description="Algorithm family that was trained."
     )

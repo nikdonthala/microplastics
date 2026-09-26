@@ -152,6 +152,60 @@ def test_train_rejects_missing_dataset(client: TestClient):
     assert response.status_code == 400
 
 
+def test_train_rejects_unknown_algorithm(client: TestClient):
+    response = client.post(
+        "/api/train",
+        json={"dataset_filename": "demo_particles.csv", "algorithm": "not_a_model"},
+    )
+    assert response.status_code == 400
+    assert "unknown algorithm" in response.json()["detail"].lower()
+
+
+def test_train_auto_selects_algorithm(client: TestClient, trained_model):
+    response = client.post(
+        "/api/train",
+        json={
+            "dataset_filename": "demo_particles.csv",
+            "n_estimators": 40,
+            "cv_folds": 3,
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["algorithm"] in {
+        "random_forest",
+        "extra_trees",
+        "gradient_boosting",
+        "hist_gradient_boosting",
+    }
+    metrics = body["metrics"]
+    assert len(metrics["candidates"]) == 4
+    assert all(
+        {"algorithm", "cv_mean_f1_macro", "cv_std_f1_macro", "cv_folds"} <= set(row)
+        for row in metrics["candidates"]
+    )
+    assert metrics["feature_importances"] is not None
+    # Winner's CV mean must be the maximum of the table.
+    best = max(metrics["candidates"], key=lambda r: r["cv_mean_f1_macro"])
+    assert best["algorithm"] == body["algorithm"]
+
+
+def test_train_pinned_algorithm(client: TestClient, trained_model):
+    response = client.post(
+        "/api/train",
+        json={
+            "dataset_filename": "demo_particles.csv",
+            "algorithm": "extra_trees",
+            "n_estimators": 40,
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["algorithm"] == "extra_trees"
+    # Pinned runs skip the CV table.
+    assert body["metrics"]["candidates"] == []
+
+
 def test_train_rejects_path_traversal(client: TestClient):
     response = client.post(
         "/api/train",

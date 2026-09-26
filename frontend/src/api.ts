@@ -1,4 +1,4 @@
-import type { AnalyzeOptions, AnalyzeResponse, ModelStatus } from "./types";
+import type { AnalyzeOptions, AnalyzeResponse, ModelMetrics, ModelStatus } from "./types";
 
 /**
  * API client. In production the frontend is served by the FastAPI app itself
@@ -38,6 +38,12 @@ export async function fetchHealth(): Promise<{ status: string; version: string }
 
 export async function fetchModelStatus(): Promise<ModelStatus> {
   return handle(await fetch(`${BASE_URL}/api/model/status`));
+}
+
+export async function fetchModelMetrics(): Promise<ModelMetrics | null> {
+  const response = await fetch(`${BASE_URL}/api/model/metrics`);
+  if (response.status === 404) return null;
+  return handle(response);
 }
 
 export async function analyzeImage(

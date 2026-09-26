@@ -39,7 +39,7 @@ from app.services.detector import detect_candidate_particles
 from app.services.feature_extraction import extract_features
 from app.services.image_processing import preprocess
 from app.services.metrics import build_size_histogram, summarize_measurements
-from app.services.training_service import DatasetError, train_random_forest
+from app.services.training_service import DatasetError, train_model
 from app.utils.image_utils import (
     InvalidImageError,
     decode_image_bytes,
@@ -66,18 +66,23 @@ MODEL_UNAVAILABLE_WARNING = (
 
 @router.get("/api/model/status", response_model=ModelStatusResponse)
 def model_status() -> ModelStatusResponse:
-    """Report whether a trained Random Forest is available for inference."""
+    """Report whether a trained classifier is available for inference."""
     feature_names = load_feature_names() if model_is_available() else None
+    model_name = "Random Forest"
     if model_is_available():
+        # The algorithm that won model selection is recorded in the metrics.
+        stored = load_model_metrics() or {}
+        model_name = str(stored.get("algorithm") or "Random Forest")
         return ModelStatusResponse(
             model_available=True,
-            model_name="Random Forest",
+            model_name=model_name,
             classes=settings.LABELS,
             feature_names=feature_names,
+            message=None,
         )
     return ModelStatusResponse(
         model_available=False,
-        model_name="Random Forest",
+        model_name=model_name,
         classes=settings.LABELS,
         feature_names=None,
         message=(
@@ -109,13 +114,20 @@ def model_metrics() -> dict[str, Any]:
 
 @router.post("/api/train", response_model=TrainResponse)
 def train(request: TrainRequest) -> TrainResponse:
-    """Train the Random Forest from a CSV already present on the server."""
+    """Train a classifier from a CSV already present on the server.
+
+    With ``algorithm="auto"`` (default) several scikit-learn families are
+    compared with stratified cross-validation and the best macro-F1 model is
+    trained and persisted.
+    """
     try:
-        result = train_random_forest(
+        result = train_model(
             dataset_filename=request.dataset_filename,
             test_size=request.test_size,
             n_estimators=request.n_estimators,
             random_state=request.random_state,
+            algorithm=request.algorithm,
+            cv_folds=request.cv_folds,
         )
     except DatasetError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -123,14 +135,32 @@ def train(request: TrainRequest) -> TrainResponse:
         logger.exception("Training failed")
         raise HTTPException(status_code=500, detail=f"Training failed: {exc}") from exc
 
+    cv_best = (
+        max(
+            result.metrics.get("candidates", []),
+            key=lambda row: row["cv_mean_f1_macro"],
+            default=None,
+        )
+        if result.algorithm == "auto"
+        else None
+    )
+    selection_note = (
+        f" CV selected '{cv_best['algorithm']}' "
+        f"(mean macro-F1 {cv_best['cv_mean_f1_macro']:.4f} ± {cv_best['cv_std_f1_macro']:.4f} "
+        f"over {result.metrics.get('cv_folds', '?')} folds)."
+        if cv_best
+        else ""
+    )
     return TrainResponse(
         status="success",
         message=(
-            "Model trained and saved. Evaluation metrics were computed from the "
-            f"held-out test split ({result.metrics.get('n_test_samples', '?')} samples)."
+            f"Trained {result.algorithm} and saved the model. Evaluation metrics "
+            "were computed from the held-out test split "
+            f"({result.metrics.get('n_test_samples', '?')} samples).{selection_note}"
         ),
         metrics=result.metrics,
         model_path=result.model_path.name,
+        algorithm=result.algorithm,
     )
 
 

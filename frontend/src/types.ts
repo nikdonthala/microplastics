@@ -61,6 +61,23 @@ export interface ModelStatus {
   message?: string | null;
 }
 
+export interface ModelMetrics {
+  algorithm?: string;
+  accuracy?: number;
+  f1_macro?: number;
+  cv_folds?: number;
+  candidates?: {
+    algorithm: string;
+    cv_mean_f1_macro: number;
+    cv_std_f1_macro: number;
+    cv_folds: number;
+  }[];
+  feature_importances?: Record<string, number> | null;
+  dataset?: string;
+  n_training_samples?: number;
+  n_test_samples?: number;
+}
+
 export interface AnalyzeOptions {
   pixelsPerMicrometer: number;
   minParticleAreaPx: number | null;

@@ -13,8 +13,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from sklearn.ensemble import RandomForestClassifier
-
 from app.config import settings
 
 
@@ -22,8 +20,12 @@ class ModelNotAvailableError(RuntimeError):
     """Raised when inference is requested but no trained model exists."""
 
 
-def load_model() -> RandomForestClassifier:
-    """Load the trained Random Forest from disk.
+def load_model() -> Any:
+    """Load the trained classifier from disk.
+
+    The estimator is whichever family won the CV model-selection stage
+    (see app/services/training_service.py); it only needs to expose the
+    scikit-learn ``predict``/``predict_proba``/``classes_`` interface.
 
     Raises :class:`ModelNotAvailableError` when the model file is missing.
     """
@@ -33,14 +35,14 @@ def load_model() -> RandomForestClassifier:
             "demonstrated, but classification requires a trained model. "
             "Run backend/training/train_model.py with a labelled dataset first."
         )
-    return RandomForestLoadHelper.load(str(settings.MODEL_PATH))
+    return SklearnModelLoader.load(str(settings.MODEL_PATH))
 
 
-class RandomForestLoadHelper:
+class SklearnModelLoader:
     """Thin wrapper around joblib so tests can monkey-patch loading."""
 
     @staticmethod
-    def load(path: str) -> RandomForestClassifier:
+    def load(path: str) -> Any:
         import joblib
 
         return joblib.load(path)

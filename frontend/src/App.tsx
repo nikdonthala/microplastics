@@ -1,7 +1,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ApiError, analyzeImage, fetchHealth, fetchModelStatus } from "./api";
+import {
+  ApiError,
+  analyzeImage,
+  fetchHealth,
+  fetchModelMetrics,
+  fetchModelStatus,
+} from "./api";
 import { ClassDonut, SizeHistogram } from "./charts";
-import type { AnalyzeResponse, ModelStatus } from "./types";
+import type { AnalyzeResponse, ModelMetrics, ModelStatus } from "./types";
 
 type Phase = "idle" | "working" | "done" | "error";
 
@@ -16,6 +22,7 @@ const CLASS_ICON: Record<string, string> = {
 export default function App() {
   const [health, setHealth] = useState<string | null>(null);
   const [model, setModel] = useState<ModelStatus | null>(null);
+  const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
   const [phase, setPhase] = useState<Phase>("idle");
@@ -31,9 +38,14 @@ export default function App() {
 
   const loadStatuses = useCallback(async () => {
     try {
-      const [h, m] = await Promise.all([fetchHealth(), fetchModelStatus()]);
+      const [h, m, mm] = await Promise.all([
+        fetchHealth(),
+        fetchModelStatus(),
+        fetchModelMetrics(),
+      ]);
       setHealth(h.status === "ok" ? `API v${h.version}` : "degraded");
       setModel(m);
+      setMetrics(m.model_available ? mm : null);
     } catch {
       setHealth("offline");
     }
@@ -114,9 +126,14 @@ export default function App() {
             <p>Image-based screening of suspected microplastics in water samples</p>
           </div>
         </div>
-        <div className="badge">
-          <span className="dot" />
-          {health ?? "connecting…"}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          {model?.model_available && (
+            <div className="badge muted">{`model: ${model.model_name}`}</div>
+          )}
+          <div className="badge">
+            <span className="dot" />
+            {health ?? "connecting…"}
+          </div>
         </div>
       </header>
 
@@ -216,6 +233,7 @@ export default function App() {
           </div>
         </div>
 
+        {metrics && <ModelCard metrics={metrics} />}
         {model && !model.model_available && model.message && (
           <div className="callout info" style={{ marginTop: 14 }}>
             {model.message}
@@ -363,3 +381,68 @@ const cellStyle: React.CSSProperties = {
   borderBottom: "1px solid rgba(25,135,84,0.10)",
   whiteSpace: "nowrap",
 };
+
+/** Model provenance card: algorithm, test metrics and CV selection table. */
+function ModelCard({ metrics }: { metrics: ModelMetrics }) {
+  const candidates = (metrics.candidates ?? []).slice().sort(
+    (a, b) => b.cv_mean_f1_macro - a.cv_mean_f1_macro,
+  );
+  const importances = Object.entries(metrics.feature_importances ?? {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  const maxImportance = importances[0]?.[1] ?? 1;
+  return (
+    <div className="callout info" style={{ marginTop: 14 }}>
+      <strong>Trained model — {metrics.algorithm ?? "classifier"}</strong>
+      <span style={{ opacity: 0.85 }}>
+        {" "}
+        · test accuracy {(100 * (metrics.accuracy ?? 0)).toFixed(1)}% · macro-F1{" "}
+        {(metrics.f1_macro ?? 0).toFixed(3)} · {metrics.n_training_samples ?? "?"} training /{" "}
+        {metrics.n_test_samples ?? "?"} test samples · dataset {metrics.dataset ?? "?"}
+      </span>
+      {candidates.length > 0 && (
+        <ul>
+          {candidates.map((row) => (
+            <li key={row.algorithm}>
+              {row.algorithm}: CV macro-F1 {row.cv_mean_f1_macro.toFixed(4)} ±{" "}
+              {row.cv_std_f1_macro.toFixed(4)} ({row.cv_folds} folds)
+            </li>
+          ))}
+        </ul>
+      )}
+      {importances.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: "0.74rem", fontWeight: 600, marginBottom: 4 }}>
+            Top features (model importance)
+          </div>
+          {importances.map(([name, value]) => (
+            <div key={name} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+              <span style={{ width: 150, fontSize: "0.74rem" }}>{name}</span>
+              <div
+                style={{
+                  height: 6,
+                  flex: 1,
+                  borderRadius: 999,
+                  background: "rgba(25,135,84,0.12)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${(value / maxImportance) * 100}%`,
+                    borderRadius: 999,
+                    background: "linear-gradient(90deg, var(--green-400), var(--green-600))",
+                  }}
+                />
+              </div>
+              <span style={{ width: 46, fontSize: "0.72rem", textAlign: "right" }}>
+                {value.toFixed(3)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

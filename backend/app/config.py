@@ -122,7 +122,10 @@ class Settings:
     MODEL_DIR: Path = Path(
         _env_str("MICROSCAN_MODEL_DIR", str(BASE_DIR / "app" / "models"))
     )
-    MODEL_PATH: Path = MODEL_DIR / "random_forest.joblib"
+    # The joblib pickle of the sklearn estimator (any of the supported
+    # families, selected by CV). Bundled with the repo so deployments ship
+    # with a working classifier; see model_metrics.json for its provenance.
+    MODEL_PATH: Path = MODEL_DIR / "model.joblib"
     FEATURE_NAMES_PATH: Path = MODEL_DIR / "feature_names.json"
     METRICS_PATH: Path = MODEL_DIR / "model_metrics.json"
 
@@ -134,6 +137,8 @@ class Settings:
     RANDOM_STATE: int = _env_int("MICROSCAN_RANDOM_STATE", 42)
     CLASS_WEIGHT: str = "balanced"
     TEST_SIZE: float = _env_float("MICROSCAN_TEST_SIZE", 0.25)
+    # Cross-validation folds used by the model-selection stage (algorithm="auto").
+    CV_FOLDS: int = _env_int("MICROSCAN_CV_FOLDS", 5)
 
     # ------------------------------------------------------------- datasets
     DATA_TRAINING_DIR: Path = BASE_DIR / "data" / "training"
