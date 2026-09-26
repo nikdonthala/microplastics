@@ -1,6 +1,7 @@
 fastapi>=0.110
 uvicorn[standard]>=0.29
-opencv-python>=4.9
+# headless build: no libGL/libxcb GUI deps, required for serverless platforms
+opencv-python-headless>=4.9
 numpy>=1.26
 pandas>=2.0
 scikit-learn>=1.4
