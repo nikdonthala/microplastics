@@ -1,0 +1,116 @@
+{
+  "accuracy": 1.0,
+  "precision_macro": 1.0,
+  "recall_macro": 1.0,
+  "f1_macro": 1.0,
+  "f1_weighted": 1.0,
+  "per_class": {
+    "fiber": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 40
+    },
+    "fragment": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 40
+    },
+    "bead": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 40
+    },
+    "other": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "support": 40
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "fiber",
+      "fragment",
+      "bead",
+      "other"
+    ],
+    "matrix": [
+      [
+        40,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        40,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        40,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        40
+      ]
+    ]
+  },
+  "n_samples": 160,
+  "algorithm": "random_forest",
+  "candidates": [
+    {
+      "algorithm": "random_forest",
+      "cv_mean_f1_macro": 1.0,
+      "cv_std_f1_macro": 0.0,
+      "cv_folds": 5
+    },
+    {
+      "algorithm": "extra_trees",
+      "cv_mean_f1_macro": 1.0,
+      "cv_std_f1_macro": 0.0,
+      "cv_folds": 5
+    },
+    {
+      "algorithm": "gradient_boosting",
+      "cv_mean_f1_macro": 0.9979,
+      "cv_std_f1_macro": 0.0042,
+      "cv_folds": 5
+    },
+    {
+      "algorithm": "hist_gradient_boosting",
+      "cv_mean_f1_macro": 0.9979,
+      "cv_std_f1_macro": 0.0042,
+      "cv_folds": 5
+    }
+  ],
+  "cv_folds": 5,
+  "n_training_samples": 480,
+  "n_test_samples": 160,
+  "n_estimators": 200,
+  "random_state": 42,
+  "test_size": 0.25,
+  "dataset": "demo_particles.csv",
+  "feature_importances": {
+    "area": 0.0507,
+    "perimeter": 0.0607,
+    "width": 0.0903,
+    "height": 0.0807,
+    "aspect_ratio": 0.1205,
+    "circularity": 0.1894,
+    "solidity": 0.0962,
+    "extent": 0.0912,
+    "equivalent_diameter": 0.0475,
+    "mean_R": 0.047,
+    "mean_G": 0.058,
+    "mean_B": 0.0679
+  }
+}

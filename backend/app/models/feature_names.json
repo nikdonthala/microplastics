@@ -1,0 +1,14 @@
+[
+  "area",
+  "perimeter",
+  "width",
+  "height",
+  "aspect_ratio",
+  "circularity",
+  "solidity",
+  "extent",
+  "equivalent_diameter",
+  "mean_R",
+  "mean_G",
+  "mean_B"
+]
