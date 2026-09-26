@@ -368,9 +368,22 @@ export default function App() {
         </>
       )}
 
-      <footer className="disclaimer center">
+      <footer className="disclaimer center site-footer">
         MicroScan AI · educational prototype · image analysis alone does not confirm polymer
         identity (FTIR/Raman required)
+        <br />
+        <a
+          href="https://github.com/nikdonthala/microplastics"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Github repo
+        </a>
+        {" · "}
+        Created by{" "}
+        <a href="https://github.com/nikdonthala" target="_blank" rel="noopener noreferrer">
+          nikdonthala
+        </a>
       </footer>
     </div>
   );

@@ -257,6 +257,15 @@ body {
 .callout ul { margin: 6px 0 0; padding-left: 18px; }
 
 .disclaimer { font-size: 0.74rem; color: var(--ink-faint); line-height: 1.5; margin-top: 14px; }
+.disclaimer a { color: var(--green-600); font-weight: 600; text-decoration: none; }
+.disclaimer a:hover { text-decoration: underline; }
+.site-footer {
+  margin-top: 28px;
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  border-top: 1px solid rgba(25, 135, 84, 0.15);
+}
+.site-footer a { font-size: 0.95rem; }
 
 /* ------------------------------------------------------------- spinner */
 .spinner {

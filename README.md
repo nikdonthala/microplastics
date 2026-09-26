@@ -1,44 +1,38 @@
 # MicroScan AI — Microplastic Screening
 
-**Live:** https://microplastic-stuff.vercel.app
+**Live demo:** https://microplastic-stuff.vercel.app
+**[Github repo](https://github.com/nikdonthala/microplastics)**
 
-Educational prototype for **image-based screening and morphological classification
-of suspected microplastics** in water samples.
+## What is this project about?
 
-> ⚠️ **Science disclaimer** — image analysis alone does not confirm polymer identity.
-> Confirmatory analysis (FTIR or Raman spectroscopy) is required. All metrics shown by
-> this app come from real computation on the data you provide; nothing is hard-coded.
+Microplastics are tiny plastic particles that end up in water and are hard to
+spot with the naked eye. This project is a web app that helps **screen water
+samples for suspected microplastics** from a simple photo, and gives a first
+guess at what kind of particles are there.
+
+## What are we doing?
+
+1. **Upload** a photo of a water sample (or use a demo image).
+2. **Detect** particles in the image using OpenCV (color/edge-based detection).
+3. **Measure** each particle's shape — size, roundness, aspect ratio, texture, etc.
+4. **Classify** particles into categories (fragment, fiber, pellet) with a
+   Random Forest model trained with scikit-learn.
+5. **Visualize** the results as interactive charts (ECharts) in a React UI.
 
 ## Stack
 
-| Layer     | Technology                                                        |
-| --------- | ----------------------------------------------------------------- |
-| Frontend  | React 19 + TypeScript + Vite, glassmorphism UI (green/white)      |
-| Charts    | ECharts                                                           |
-| Backend   | FastAPI (Python), OpenCV, scikit-learn (Random Forest)            |
-| Deploy    | Vercel — Vite static build + FastAPI as a serverless function     |
-| Tests     | pytest (35 tests)                                                 |
+- **Frontend:** React + TypeScript + Vite
+- **Backend:** FastAPI (Python) + OpenCV + scikit-learn
+- **Deploy:** Vercel (static frontend + serverless API)
 
-## Repository layout
+> ⚠️ This is an educational prototype — image analysis alone cannot confirm
+> polymer identity. Confirmatory analysis (FTIR/Raman spectroscopy) is required.
 
-```
-├── api/
-│   ├── index.py            # Vercel serverless entrypoint (exports `app`)
-│   └── requirements.txt    # Python deps for the function
-├── backend/
-│   ├── app/                # FastAPI app (routes, services, schemas, utils)
-│   ├── data/               # training/ and sample/ data dirs
-│   ├── training/           # train_model.py, evaluate_model.py, demo data gen
-│   └── tests/              # pytest suite
-├── frontend/
-│   └── src/                # React UI (App.tsx, charts.tsx, api.ts, styles.css)
-├── vercel.json             # Vercel build + routing config
-└── .github/workflows/ci.yml
-```
+## Setup & API Reference
 
-## Run locally
+### Run locally
 
-### Backend
+#### Backend
 
 ```bash
 cd backend
@@ -46,7 +40,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload        # http://localhost:8000 (docs at /docs)
 ```
 
-### Frontend
+#### Frontend
 
 ```bash
 cd frontend
@@ -54,7 +48,7 @@ npm install
 npm run dev                          # http://localhost:5173 (proxies /api to :8000)
 ```
 
-### Train the demo model (optional — enables classification)
+#### Train the demo model (optional — enables classification)
 
 ```bash
 cd backend
@@ -65,24 +59,24 @@ python -m training.train_model --dataset demo_particles.csv
 Without a trained model the app runs in **demo mode**: detection + morphology
 features work, classification returns `unclassified`.
 
-## API
+### API endpoints
 
-| Endpoint               | Method | Purpose                                     |
-| ---------------------- | ------ | ------------------------------------------- |
-| `/api/health`          | GET    | Liveness probe                              |
-| `/api/analyze`         | POST   | Full pipeline (multipart image upload)      |
-| `/api/model/status`    | GET    | Whether a trained model is available        |
-| `/api/model/metrics`   | GET    | Evaluation metrics from the training run    |
-| `/api/train`           | POST   | Train from a CSV in `backend/data/training/`|
+| Endpoint             | Method | Purpose                                      |
+| -------------------- | ------ | -------------------------------------------- |
+| `/api/health`        | GET    | Liveness probe                               |
+| `/api/analyze`       | POST   | Full pipeline (multipart image upload)       |
+| `/api/model/status`  | GET    | Whether a trained model is available         |
+| `/api/model/metrics` | GET    | Evaluation metrics from the training run     |
+| `/api/train`         | POST   | Train from a CSV in `backend/data/training/` |
 
-## Tests
+### Tests
 
 ```bash
 cd backend
 python -m pytest -q
 ```
 
-## Deployment (Vercel)
+### Deployment (Vercel)
 
 1. Push this repository to GitHub (private repo `microplastics`).
 2. Import it at [vercel.com/new](https://vercel.com/new) — `vercel.json` supplies
@@ -93,7 +87,7 @@ python -m pytest -q
 The function runs on Fluid compute; heavy deps (OpenCV, scikit-learn) are
 supported (function size limit is 5 GB on Fluid).
 
-## CI
+### CI
 
 GitHub Actions runs the backend pytest suite and the frontend TypeScript build
 on every push/PR — broken commits never reach Vercel auto-deploy.
