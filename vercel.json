@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "cd frontend && npm install --no-audit --no-fund && npm run build",
+  "outputDirectory": "frontend/dist",
+  "installCommand": "echo \"(install handled in buildCommand; backend deps install inside the function build)\"",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60
+    }
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/index.py" },
+    { "src": "/assets/(.*)", "dest": "/assets/$1" },
+    { "src": "/(.*\\.(js|css|svg|png|jpg|ico|woff2?))", "dest": "/$1" },
+    { "src": "/(.*)", "dest": "/api/index.py" }
+  ]
+}
